@@ -10,11 +10,24 @@ class = setmetatable({
     init = function() end
 }, {__index = _ENV})
 
-entity = class:new({
- --   
+game_state = class:new({
+
 })
 
-snowflake = entity:new({
+start_state = game_state:new({
+    
+    update = function(_ENV)
+        blizzard:update()
+    end,
+
+
+    draw = function(_ENV)
+        blizzard:draw()
+    print("start state", 20, 20, 7)
+    end
+})
+
+snowflake = class:new({
     x = rnd(127),
     y = rnd(127),
     speed = rnd(2+0.25),
@@ -43,13 +56,13 @@ snowflake = entity:new({
 })
 
 
-blizzard = entity:new({
+blizzard = class:new({
    snowflakes = {},
    active_snowflakes = 1,
    blizzard_growing = true,
    timer = 0,
 
-   init = function(_ENV, count)
+   create = function(_ENV, count)
         for i = 1, count do
             local flake = snowflake:new({
             x = rnd(127),
@@ -85,77 +98,32 @@ blizzard = entity:new({
     end,
 
     draw = function(_ENV)
+        cls()
         for i = 1, active_snowflakes do
             snowflakes[i]:draw()
         end
     end
 })
 
-
---initial variables to be moved
 function initial_variables()
-    game_mode = "start"
+    current_state = start_state:new()
     blizzard_instance = blizzard:new()
-    blizzard_instance:init(50)
-     
-     
+    blizzard_instance:create(50)
 end
---
+
 function _init()
     cls()
     initial_variables()
 end
 
-function update_start()
-    blizzard:update()
-
-    
-    
-end
-
-function update_worldmap()
-
-end
-
-function update_battle()
-
-end
-
 function _update()
-    if game_mode=="start" then
-        update_start()
-    elseif game_mode=="worldmap" then
-        update_worldmap()
-    elseif game_mode=="battle" then
-        update_battle()
+    if current_state and current_state.update then
+        current_state:update()
     end
 end
 
-function draw_start()
-    cls()
-    print(game_mode, 10, 10, 7)
-    blizzard:draw()
-    
-    print(snowflakes, 30, 30, 7)
-    print("timer " ..blizzard.timer, 20, 20, 7)
-    
-    
-end
-
-function draw_worldmap()
-
-end
-
-function draw_battle()
-
-end
-
 function _draw()
-    if game_mode=="start" then
-        draw_start()
-    elseif game_mode=="worldmap" then
-        draw_worldmap()
-    elseif game_mode=="battle" then
-        draw_battle()
+    if current_state and current_state.draw then
+        current_state:draw()
     end
 end
