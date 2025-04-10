@@ -11,20 +11,96 @@ class = setmetatable({
 }, {__index = _ENV})
 
 game_state = class:new({
-
+   
 })
 
 start_state = game_state:new({
     
-    update = function(_ENV)
+    update = function()
         blizzard:update()
+        if btnp(4) then
+            current_state = worldmap_state:new()
+        end
+        
     end,
 
 
-    draw = function(_ENV)
+    draw = function()
         blizzard:draw()
-    print("start state", 20, 20, 7)
+        print("start", 5, 5, 7)
+        
     end
+   
+
+})
+
+worldmap_state = game_state:new({
+
+   update = function()
+        if btnp(4) then
+            current_state = battle_state:new()
+        end
+    end,
+
+    draw = function()
+        cls()
+        print("world map", 25, 25, 7)
+    end
+
+
+})
+
+
+battle_state = game_state:new({
+
+    update = function()
+        if btnp(4) then
+            current_state = worldmap_state:new()
+        end
+    end,
+
+    draw = function()
+        cls()
+        print("battle state", 25, 25, 7)
+    end
+
+    
+})
+
+character = class:new({
+    name = "Hero",
+    hp = 100,
+    mp = 100,
+    attack = 10,
+    defense = 5,
+    x = 64,
+    y = 64,
+    speed = 1,
+   
+    update = function(_ENV)
+        if btnp(0) then
+            x -= speed
+        elseif btnp(1) then
+            x += speed
+        elseif btnp(2) then
+            y -= speed
+        elseif btnp(3) then
+            y += speed
+        elseif btnp(4) then
+            x += 10
+        elseif btnp(5) then
+            y+= 10
+        end
+    end,
+
+    draw = function(_ENV)
+        circfill(x, y, 5, 8)
+    end
+
+        
+
+
+
 })
 
 snowflake = class:new({
@@ -106,9 +182,9 @@ blizzard = class:new({
 })
 
 function initial_variables()
-    current_state = start_state:new()
+    current_state = start_state:new() -- global variable, don't bother with _ENV for state switching
     blizzard_instance = blizzard:new()
-    blizzard_instance:create(50)
+    blizzard_instance:create(100)
 end
 
 function _init()
