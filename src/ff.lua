@@ -10,52 +10,80 @@ class = setmetatable({
     init = function() end
 }, {__index = _ENV})
 
+
+-- game state stuff
+-- maybe one for dungeons, might be superfluous 
 game_state = class:new({
-   
+   --just in case I want to add some things
 })
 
+state_manager = class:new({
+    current_state = nil,
+
+    set_state = function(_ENVV, new_state)
+        current_state = new_state
+    end,
+
+    update = function(_ENV_)
+        if current_state and current_state.update then
+            current_state:update()
+        end
+    end,
+
+    draw = function(_ENV)
+        if current_state and current_state.update then
+            current_state:draw()
+        end
+    end,
+})
+
+--title screen
 start_state = game_state:new({
     
     update = function()
         blizzard:update()
         if btnp(4) then
-            current_state = worldmap_state:new()
+            sm:set_state(worldmap_state:new())
         end
+        sprite:update()
         
     end,
 
 
     draw = function()
         blizzard:draw()
-        print("start", 5, 5, 7)
-        
+        print("title screen", 64, 64, 13)
+        sprite:draw()
     end
    
 
 })
 
+
+--worldmap
 worldmap_state = game_state:new({
 
    update = function()
         if btnp(4) then
-            current_state = battle_state:new()
+            sm:set_state(battle_state:new())
         end
     end,
 
     draw = function()
         cls()
         print("world map", 25, 25, 7)
+        map()
     end
 
 
 })
 
-
+-- for fights
 battle_state = game_state:new({
 
     update = function()
         if btnp(4) then
-            current_state = worldmap_state:new()
+            sm:set_state(worldmap_state:new())
         end
     end,
 
@@ -67,42 +95,65 @@ battle_state = game_state:new({
     
 })
 
-character = class:new({
-    name = "Hero",
-    hp = 100,
-    mp = 100,
-    attack = 10,
-    defense = 5,
-    x = 64,
-    y = 64,
-    speed = 1,
-   
-    update = function(_ENV)
+--sprites
+
+sprite  = class:new({ 
+    
+    x = 10, 
+    y = 10,
+    move_speed = 1,
+    sprite = 56,
+    w = 1,
+    h = 1,
+
+    animate = function(_ENV)
+        local animationframes = {56, 57, 58, 59}
+        local currentframe = 1
+        local function playanimation()
+            currentframe += 1
+            if currentframe > #animationframes then
+                currentframe = 1
+            end
+        end
+
+    end,
+
+    update = function(_ENV)  
         if btnp(0) then
-            x -= speed
+            x -= move_speed
         elseif btnp(1) then
-            x += speed
+            x += move_speed
         elseif btnp(2) then
-            y -= speed
+            y -= move_speed
         elseif btnp(3) then
-            y += speed
-        elseif btnp(4) then
-            x += 10
-        elseif btnp(5) then
-            y+= 10
+            y += move_speed
         end
     end,
 
+
+   
+
     draw = function(_ENV)
-        circfill(x, y, 5, 8)
+            spr(sprite, x, y, h , w, xflip, yflip)
+        if btnp(0) then 
+            spr(sprite, x, y, h , w, xflip, yflip)
+            xflip = true
+        elseif btnp(1) then
+            spr(sprite, x, y, h , w, xflip ,yflip)
+            xflip = false
+        elseif btnp(2) then
+            spr(sprite, x, y, h , w, xflip ,yflip)
+            yflip = true
+        else if btnp(3) then 
+            spr(sprite, x, y, h , w, xflip ,yflip)
+            yflip = false
+        end
+    
     end
-
-        
-
-
-
+end
 })
 
+--snowflake/title screen blizzard
 snowflake = class:new({
     x = rnd(127),
     y = rnd(127),
@@ -181,25 +232,24 @@ blizzard = class:new({
     end
 })
 
+
+--init stuff, trying to keep this fairly clean 
 function initial_variables()
-    current_state = start_state:new() -- global variable, don't bother with _ENV for state switching
-    blizzard_instance = blizzard:new()
+    sm = state_manager:new() --new state manager for gloabl env
+    sm:set_state(start_state:new())
+    blizzard_instance = blizzard:new() --title screen blizzard
     blizzard_instance:create(100)
 end
 
 function _init()
     cls()
-    initial_variables()
+    initial_variables() 
 end
 
 function _update()
-    if current_state and current_state.update then
-        current_state:update()
-    end
+    sm:update()
 end
 
 function _draw()
-    if current_state and current_state.draw then
-        current_state:draw()
-    end
+    sm:draw()
 end
